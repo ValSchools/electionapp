@@ -585,10 +585,15 @@
 
         let role = 'operator';
         try {
-          await rpc('ensure_admin');
+          const ea = await rpc('ensure_admin');
+          console.log('ensure_admin ->', ea);
           const r = await rpc('my_role');
+          console.log('my_role ->', r);
           if (r) role = r;
-        } catch (_) {}
+        } catch (roleErr) {
+          console.error('role check failed:', roleErr);
+          throw Error('Role check failed: ' + (roleErr.message || roleErr));
+        }
 
         if (role !== 'admin') {
           throw Error('Access denied. This account does not have the Admin role. Please sign in with an admin account.');
