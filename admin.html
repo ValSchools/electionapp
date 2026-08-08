@@ -1,0 +1,1115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+  <title>Youth Election — Admin Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-card: rgba(19, 26, 42, 0.75);
+      --bg-card-hover: rgba(28, 38, 60, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(139, 92, 246, 0.35);
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.35);
+      --accent-hover: #7c3aed;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --rose: #f43f5e;
+      --amber: #f59e0b;
+      --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.1) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-header {
+      position: sticky; top: 0;
+      z-index: 100;
+      background: rgba(9, 13, 22, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: #fff;
+    }
+    .logo-icon {
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      color: #fff;
+      padding: 0.4rem 0.65rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+    .user-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.8rem;
+      border-radius: 99px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .role-tag {
+      background: rgba(139, 92, 246, 0.2);
+      color: #c4b5fd;
+      font-weight: 700;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.15rem 0.5rem;
+      border-radius: 6px;
+    }
+
+    .main-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    .auth-container {
+      max-width: 440px;
+      margin: 4rem auto;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.25rem;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    .card-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .card-subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.4; }
+
+    .form-group { margin-bottom: 1.25rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 0.5rem;
+    }
+    .input {
+      width: 100%;
+      background: rgba(15, 22, 36, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.85rem 1rem;
+      color: #fff;
+      font-family: var(--font);
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.85rem 1.5rem;
+      border-radius: 12px;
+      font-family: var(--font);
+      font-weight: 700;
+      font-size: 0.95rem;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-block { width: 100%; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5); }
+    .btn-secondary { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--border); }
+    .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+    .btn-danger { background: rgba(244, 63, 94, 0.15); color: #fca5a5; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .btn-danger:hover { background: rgba(244, 63, 94, 0.3); }
+    .btn-sm { padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: 8px; }
+
+    .banner { padding: 0.85rem 1rem; border-radius: 10px; font-size: 0.85rem; margin-bottom: 1.25rem; line-height: 1.4; }
+    .banner-error { background: rgba(244, 63, 94, 0.15); border: 1px solid rgba(244, 63, 94, 0.3); color: #fca5a5; }
+    .banner-success { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+    .metric-val { font-size: 2.25rem; font-weight: 800; color: #fff; margin-top: 0.25rem; letter-spacing: -0.02em; }
+    .metric-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+    .metric-trend { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.75rem; font-weight: 600; color: var(--emerald); margin-top: 0.5rem; }
+
+    .nav-tabs { display: flex; gap: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; padding-bottom: 0.5rem; flex-wrap: wrap; }
+    .tab-btn { background: none; border: none; color: var(--muted); padding: 0.6rem 1.1rem; font-family: var(--font); font-weight: 600; font-size: 0.88rem; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: rgba(139, 92, 246, 0.15); color: #fff; border: 1px solid rgba(139, 92, 246, 0.3); }
+
+    .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 900px) { .section-grid { grid-template-columns: 1fr; } }
+
+    .pos-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem; }
+    .pos-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .cand-row { margin-bottom: 1rem; }
+    .cand-header { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .progress-bar { height: 10px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan)); border-radius: 99px; }
+
+    .drop-zone { border: 2px dashed var(--border); border-radius: 14px; padding: 2rem; text-align: center; cursor: pointer; background: rgba(15, 22, 36, 0.4); }
+    .table-container { overflow-x: auto; margin-top: 1rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; padding: 0.75rem; border-bottom: 1px solid var(--border); }
+    td { padding: 0.75rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+
+    .tag-badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
+    .tag-unused { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .tag-voted { background: rgba(244, 63, 94, 0.15); color: #fca5a5; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo">
+        <span class="logo-icon">YE</span>
+        <span id="appTitle">Youth Election Admin</span>
+      </div>
+      <div id="userState" class="user-badge hidden">
+        <span id="who">Admin</span>
+        <span class="role-tag" id="roleTag">ADMIN</span>
+        <button id="logoutBtn" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem">Sign out</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+
+    <!-- LOGIN SCREEN (Clean & Private) -->
+    <div id="loginView" class="auth-container">
+      <div class="card">
+        <h2 class="card-title">Admin Control Sign In</h2>
+        <p class="card-subtitle">Sign in to control room to manage elections, voter codes, contestants, and live tallies.</p>
+        
+        <div id="loginAlert"></div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label>Admin Email</label>
+            <input class="input" id="email" type="email" placeholder="admin@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input class="input" id="password" type="password" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="signInSubmitBtn">Sign in to Dashboard</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboardView" class="hidden">
+
+      <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('live')">📊 Live Overview</button>
+        <button class="tab-btn" onclick="switchTab('voters')">🎟️ Voter Codes</button>
+        <button class="tab-btn" onclick="switchTab('contestants')">✏️ Contestants & Positions</button>
+        <button class="tab-btn" onclick="switchTab('officers')">👥 Polling Officers</button>
+        <button class="tab-btn" onclick="switchTab('export')">⚡ Export & Tools</button>
+        <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+      </div>
+
+      <div id="globalMsg"></div>
+
+      <!-- METRICS -->
+      <div class="dashboard-grid">
+        <div class="metric-card">
+          <div class="metric-label">Ballots Cast</div>
+          <div class="metric-val" id="ballots">0</div>
+          <div class="metric-trend">⚡ Real-time updates</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Registered Voters</div>
+          <div class="metric-val" id="registered">0</div>
+          <div class="metric-trend" style="color: var(--cyan)">👥 Active Roll</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Voter Turnout</div>
+          <div class="metric-val" id="turnout">0%</div>
+          <div class="metric-trend" style="color: var(--amber)">In Progress</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">System Status</div>
+          <div class="metric-val" style="font-size: 1.25rem; color: var(--emerald);">● Online</div>
+          <div class="metric-trend" style="color: var(--muted)">Supabase Engine</div>
+        </div>
+      </div>
+
+      <!-- TAB 1: LIVE TALLIES -->
+      <div id="tabLive">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="font-size: 1.25rem;">Live Tally Breakdown</h2>
+          <button class="btn btn-secondary btn-sm" id="refreshBtn">🔄 Refresh Tallies</button>
+        </div>
+        <div id="statsContainer">
+          <div style="color: var(--muted); text-align: center; padding: 3rem;">Loading election results...</div>
+        </div>
+      </div>
+
+      <!-- TAB 2: VOTER CODES GENERATOR -->
+      <div id="tabVoters" class="hidden">
+        <div class="section-grid">
+          <div>
+            <div class="card" style="margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">⚡ Bulk Code Generator</h3>
+              <p class="card-subtitle">Generate multiple unique Voter Identification Codes instantly for distribution.</p>
+              <div class="form-group">
+                <label>Number of Codes to Generate</label>
+                <input class="input" id="bulkCount" type="number" min="1" max="100" value="10">
+              </div>
+              <button class="btn btn-primary btn-block" id="genBulkBtn">⚡ Generate Voter Codes</button>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">➕ Add Single Voter Code</h3>
+              <p class="card-subtitle">Manually add a specific Voter ID and name.</p>
+              <div class="form-group">
+                <label>Voter ID Code</label>
+                <input class="input" id="manualVoterId" placeholder="e.g. YTH-101">
+              </div>
+              <div class="form-group">
+                <label>Voter Full Name (Optional)</label>
+                <input class="input" id="manualVoterName" placeholder="e.g. John Doe">
+              </div>
+              <button class="btn btn-secondary btn-block" id="addSingleVoterBtn">Add Voter Code</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size: 1.1rem;">Registered Voter Codes</h3>
+                <div style="display:flex; gap:0.5rem;">
+                  <button class="btn btn-secondary btn-sm" id="copyUnusedBtn">📋 Copy Unused</button>
+                  <button class="btn btn-secondary btn-sm" id="exportVotersCsvBtn">📥 CSV</button>
+                </div>
+              </div>
+              <div id="voterListContainer">
+                <div style="color:var(--muted); text-align:center; padding: 2rem;">Loading voter codes...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: CONTESTANTS & POSITIONS MANAGER -->
+      <div id="tabContestants" class="hidden">
+        <div class="card" style="margin-bottom: 1.5rem;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">➕ Add New Position</h3>
+          <p class="card-subtitle">Create a new office/position for candidates to run for.</p>
+          <div style="display:flex; gap:0.75rem;">
+            <input class="input" id="newPosName" placeholder="e.g. Vice President, Treasurer, PRO" style="flex:1;">
+            <button class="btn btn-primary" id="addPosBtn" style="white-space:nowrap;">+ Add Position</button>
+          </div>
+        </div>
+
+        <h2 style="font-size: 1.25rem; margin-bottom: 1rem;">Election Positions & Candidates</h2>
+        <div id="contestantsContainer">
+          <div style="color: var(--muted); text-align: center; padding: 3rem;">Loading positions & candidates...</div>
+        </div>
+      </div>
+
+      <!-- TAB 4: POLLING OFFICERS -->
+      <div id="tabOfficers" class="hidden">
+        <div class="section-grid">
+          <div>
+            <div class="card" style="margin-bottom: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Add Polling Officer</h3>
+              <p class="card-subtitle">Create individual polling officer accounts to operate voting stations.</p>
+              <div class="form-group">
+                <label>Officer Email</label>
+                <input class="input" id="oneEmail" type="email" placeholder="officer@station1.com">
+              </div>
+              <div class="form-group">
+                <label>Temporary Password</label>
+                <input class="input" id="onePassword" type="password" placeholder="Min 8 characters">
+              </div>
+              <button class="btn btn-primary btn-block" id="addOneBtn">Create Officer Account</button>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Bulk CSV Upload</h3>
+              <p class="card-subtitle">Upload CSV file with columns: <code>email,password,role</code></p>
+              
+              <div class="drop-zone" onclick="document.getElementById('csvInput').click()">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📁</div>
+                <div style="font-weight: 600;">Click or drop CSV file here</div>
+                <div style="font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem;" id="csvName">Select a file</div>
+                <input id="csvInput" type="file" accept=".csv,text/csv" class="hidden">
+              </div>
+              
+              <button class="btn btn-secondary btn-block" id="importCsvBtn" style="margin-top: 1rem;" disabled>Import Officers Batch</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="card">
+              <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Batch Upload Status</h3>
+              <div id="usersOut" style="color: var(--muted); font-size: 0.85rem;">No batch upload performed yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6: SETTINGS -->
+      <div id="tabSettings" class="hidden">
+        <div class="section-grid">
+          <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Application Title</h3>
+            <p class="card-subtitle">This title appears on the voting terminal and the admin dashboard.</p>
+            <div class="form-group">
+              <label>Election / Application Title</label>
+              <input class="input" id="appTitleInput" maxlength="80" placeholder="Youth Election Terminal">
+            </div>
+            <button class="btn btn-primary" id="saveTitleBtn">Save Title</button>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Election Status</h3>
+            <p class="card-subtitle">Control whether voting is allowed. Only allow voting when status is "Open".</p>
+            <div class="form-group">
+              <label>Current Status</label>
+              <select class="input" id="electionStatusSelect">
+                <option value="draft">Draft (Setup Mode - No Voting)</option>
+                <option value="open">Open (Voting Enabled)</option>
+                <option value="closed">Closed (Election Ended)</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="saveStatusBtn">Update Status</button>
+          </div>
+        </div>
+
+        <div class="card" style="border-color:rgba(244,63,94,.35); margin-top: 1.5rem;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem; color:#fca5a5;">⚠️ Danger Zone: Reset Election</h3>
+          <p class="card-subtitle">This permanently removes all cast ballots and vote records. You can optionally remove voter codes and the contest structure too. This action is logged in the audit trail.</p>
+          <div class="form-group"><label><input type="checkbox" id="resetVoters"> Also delete voter codes</label></div>
+          <div class="form-group"><label><input type="checkbox" id="resetStructure"> Also delete positions and candidates</label></div>
+          <div class="form-group">
+            <label>Type RESET to confirm</label>
+            <input class="input" id="resetConfirmation" autocomplete="off" placeholder="RESET">
+          </div>
+          <button class="btn btn-danger" id="resetElectionBtn">Reset Election Data</button>
+        </div>
+      </div>
+
+      <!-- TAB 5: EXPORT & TOOLS -->
+      <div id="tabExport" class="hidden">
+        <div class="card">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Election Data Export</h3>
+          <p class="card-subtitle">Download raw tallies and results.</p>
+          <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button class="btn btn-secondary" style="width: auto;" id="downloadCsvBtn">📥 Export Results (JSON)</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const CFG = {
+      url: 'https://jfumdivbeqqbvdzqkdrf.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpmdW1kaXZiZXFxYnZkenFrZHJmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyOTU0NTUsImV4cCI6MjEwMDg3MTQ1NX0.lQndx2RPxTeAIe9VdnFySP0fYlvX6qgq4qr1Sopz-jk',
+      functionUrl: 'https://jfumdivbeqqbvdzqkdrf.supabase.co/functions/v1/admin-create-users',
+      logUrl: 'https://jfumdivbeqqbvdzqkdrf.supabase.co/functions/v1/log-vote'
+    };
+
+    const ADMIN_EMAIL = 'obiajuluonuchukwu@gmail.com';
+
+    function isJwtExpired(token) {
+      try { const p = JSON.parse(atob(token.split('.')[1])); return p.exp * 1000 < Date.now(); }
+      catch { return true; }
+    }
+    const _raw = localStorage.getItem('yeAdminSession');
+    if (_raw) {
+      try { const _s = JSON.parse(_raw); if (!_s.token || isJwtExpired(_s.token)) localStorage.removeItem('yeAdminSession'); }
+      catch { localStorage.removeItem('yeAdminSession'); }
+    }
+
+    let session = JSON.parse(localStorage.yeAdminSession || 'null');
+    let csvRows = [];
+    let lastStatsData = null;
+    let cachedVoters = [];
+
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+
+    async function refreshSessionToken() {
+      if (!session || !session.refresh) return false;
+      try {
+        let r = await fetch(CFG.url + '/auth/v1/token?grant_type=refresh_token', {
+          method: 'POST',
+          headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: session.refresh })
+        });
+        if (!r.ok) return false;
+        let d = await r.json();
+        session.token = d.access_token;
+        session.refresh = d.refresh_token;
+        localStorage.yeAdminSession = JSON.stringify(session);
+        return true;
+      } catch (e) { return false; }
+    }
+
+    async function req(path, body, auth = true, isRetry = false, customMethod = null) {
+      let headers = {
+        apikey: CFG.key,
+        Authorization: 'Bearer ' + (auth && session ? session.token : CFG.key),
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation'
+      };
+      let method = customMethod || (body ? 'POST' : 'GET');
+      let r = await fetch(CFG.url + path, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      let d = await r.json().catch(() => null);
+
+      if (!r.ok) {
+        let errMsg = d?.message || d?.error || ('HTTP ' + r.status);
+        if ((errMsg.includes('JWT') || r.status === 401) && auth && !isRetry) {
+          let refreshed = await refreshSessionToken();
+          if (refreshed) return req(path, body, auth, true, customMethod);
+        }
+        throw Error(errMsg);
+      }
+      return d;
+    }
+
+    async function rpc(fn, args = {}, publicOnly = false) {
+      return req('/rest/v1/rpc/' + fn, args, !publicOnly);
+    }
+
+    function showBanner(targetId, msg, isError = false) {
+      const target = $(targetId);
+      if(!target) return;
+      target.innerHTML = `<div class="banner ${isError ? 'banner-error' : 'banner-success'}">${esc(msg)}</div>`;
+    }
+
+    function updateUIState() {
+      if (session) {
+        $('#loginView').classList.add('hidden');
+        $('#dashboardView').classList.remove('hidden');
+        $('#userState').classList.remove('hidden');
+        $('#who').textContent = session.user;
+        $('#roleTag').textContent = session.role || 'ADMIN';
+        loadStats();
+      } else {
+        $('#loginView').classList.remove('hidden');
+        $('#dashboardView').classList.add('hidden');
+        $('#userState').classList.add('hidden');
+      }
+    }
+
+    // SIGN IN
+    $('#loginForm').onsubmit = async e => {
+      e.preventDefault();
+      const btn = $('#signInSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Authenticating...';
+      $('#loginAlert').innerHTML = '';
+
+      const userEmail = $('#email').value.trim().toLowerCase();
+      const userPass  = $('#password').value;
+
+      try {
+        let a = await req('/auth/v1/token?grant_type=password', {
+          email: userEmail,
+          password: userPass
+        }, false);
+
+        let role = 'operator';
+        try {
+          const r = await rpc('my_role');
+          if (r) role = r;
+        } catch (_) {}
+
+        if (role !== 'admin') {
+          throw Error('Access denied. This account does not have the Admin role. Please sign in with an admin account.');
+        }
+
+        session = { user: a.user.email, role, token: a.access_token, refresh: a.refresh_token };
+        localStorage.yeAdminSession = JSON.stringify(session);
+        updateUIState();
+      } catch (err) {
+        const msg = err.message || 'Sign-in failed.';
+        if (/invalid login|invalid_grant|email not confirmed/i.test(msg)) {
+          showBanner('#loginAlert', 'Sign-in failed. Check the email and password, make sure the account exists in Supabase Authentication, and confirm the email if confirmation is enabled.', true);
+        } else {
+          showBanner('#loginAlert', msg, true);
+        }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Sign in to Dashboard';
+      }
+    };
+
+    $('#logoutBtn').onclick = () => {
+      localStorage.removeItem('yeAdminSession');
+      session = null;
+      updateUIState();
+    };
+
+    // TAB SWITCHING
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      
+      $('#tabLive').classList.toggle('hidden', tabName !== 'live');
+      $('#tabVoters').classList.toggle('hidden', tabName !== 'voters');
+      $('#tabContestants').classList.toggle('hidden', tabName !== 'contestants');
+      $('#tabOfficers').classList.toggle('hidden', tabName !== 'officers');
+      $('#tabExport').classList.toggle('hidden', tabName !== 'export');
+      $('#tabSettings').classList.toggle('hidden', tabName !== 'settings');
+
+      if (tabName === 'voters') loadVoters();
+      if (tabName === 'contestants') loadContestants();
+      if (tabName === 'settings') loadSettings();
+    };
+
+    // ── LIVE TALLIES ─────────────────────────────────────────
+    async function loadStats() {
+      try {
+        let r = await rpc('election_results', {}, true);
+        lastStatsData = r;
+        let turn = r.registered ? Math.round((r.ballots / r.registered) * 100) : 0;
+        
+        $('#ballots').textContent = r.ballots || 0;
+        $('#registered').textContent = r.registered || 0;
+        $('#turnout').textContent = turn + '%';
+
+        let html = '';
+        if (r.positions && r.positions.length > 0) {
+          r.positions.forEach(p => {
+            let totalPosVotes = (p.candidates || []).reduce((acc, c) => acc + (c.votes || 0), 0) || 1;
+            html += `<div class="pos-card">
+              <div class="pos-title">
+                <span>${esc(p.name)}</span>
+                <span style="font-size:0.8rem; color:var(--muted)">${totalPosVotes} Votes</span>
+              </div>`;
+            
+            (p.candidates || []).forEach(c => {
+              let pct = Math.round((c.votes / totalPosVotes) * 100);
+              html += `
+                <div class="cand-row">
+                  <div class="cand-header">
+                    <span>${esc(c.name)}</span>
+                    <span>${c.votes} (${pct}%)</span>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${pct}%"></div>
+                  </div>
+                </div>
+              `;
+            });
+            html += `</div>`;
+          });
+        } else {
+          html = `<div style="text-align:center; padding: 2rem; color: var(--muted)">No positions or candidates configured yet. Go to <strong>✏️ Contestants & Positions</strong> to add positions.</div>`;
+        }
+
+        $('#statsContainer').innerHTML = html;
+      } catch (e) {
+        showBanner('#globalMsg', 'Could not fetch live results: ' + e.message, true);
+      }
+    }
+    $('#refreshBtn').onclick = loadStats;
+    setInterval(() => session && loadStats(), 15000);
+
+    // ── VOTER CODES GENERATOR ───────────────────────────────
+    async function loadVoters() {
+      try {
+        let voters = await req('/rest/v1/registered_voters?select=*');
+        cachedVoters = voters || [];
+
+        let html = `<div class="table-container"><table>
+          <tr><th>Voter ID Code</th><th>Name</th><th>Status</th><th>Action</th></tr>`;
+        
+        if (cachedVoters.length === 0) {
+          html += `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:2rem;">No voter codes generated yet. Use the generator on the left to create codes.</td></tr>`;
+        } else {
+          cachedVoters.forEach(v => {
+            html += `<tr>
+              <td><strong style="font-family:monospace; font-size:0.95rem; color:var(--cyan);">${esc(v.voter_id)}</strong></td>
+              <td>${esc(v.name || 'Anonymous')}</td>
+              <td>${v.has_voted ? '<span class="tag-badge tag-voted">🔴 Voted</span>' : '<span class="tag-badge tag-unused">🟢 Ready</span>'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteVoter('${esc(v.voter_id)}')">Delete</button></td>
+            </tr>`;
+          });
+        }
+        html += `</table></div>`;
+        $('#voterListContainer').innerHTML = html;
+      } catch (e) {
+        showBanner('#globalMsg', 'Error loading voter codes: ' + e.message, true);
+      }
+    }
+
+    // Single Voter Add
+    $('#addSingleVoterBtn').onclick = async () => {
+      let code = $('#manualVoterId').value.trim().toUpperCase();
+      let name = $('#manualVoterName').value.trim() || 'Voter';
+      if (!code) return alert('Please enter a Voter ID code.');
+
+      try {
+        await req('/rest/v1/registered_voters', { voter_id: code, name });
+        showBanner('#globalMsg', `Voter code ${code} created successfully!`);
+        $('#manualVoterId').value = '';
+        $('#manualVoterName').value = '';
+        loadVoters();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    // Bulk Code Generator
+    $('#genBulkBtn').onclick = async () => {
+      let count = parseInt($('#bulkCount').value, 10) || 10;
+      if (count < 1 || count > 100) return alert('Select between 1 and 100 codes to generate.');
+
+      const newCodes = [];
+      const prefix = 'YTH';
+      for (let i = 0; i < count; i++) {
+        const randHex = Math.floor(1000 + Math.random() * 9000);
+        newCodes.push({ voter_id: `${prefix}-${randHex}`, name: `Voter ${randHex}` });
+      }
+
+      try {
+        await req('/rest/v1/registered_voters', newCodes);
+        showBanner('#globalMsg', `Successfully generated ${count} new Voter Codes!`);
+        loadVoters();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', 'Error generating codes: ' + e.message, true);
+      }
+    };
+
+    // Delete Voter
+    window.deleteVoter = async function(voterId) {
+      if (!confirm(`Delete voter code ${voterId}?`)) return;
+      try {
+        await req(`/rest/v1/registered_voters?voter_id=eq.${encodeURIComponent(voterId)}`, null, true, false, 'DELETE');
+        showBanner('#globalMsg', `Deleted voter ${voterId}`);
+        loadVoters();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    // Copy Unused Codes
+    $('#copyUnusedBtn').onclick = () => {
+      const unused = cachedVoters.filter(v => !v.has_voted).map(v => v.voter_id);
+      if (unused.length === 0) return alert('No unused voter codes available.');
+      navigator.clipboard.writeText(unused.join('\n'));
+      alert(`Copied ${unused.length} unused Voter Codes to clipboard!`);
+    };
+
+    // Export Voter Codes CSV
+    $('#exportVotersCsvBtn').onclick = () => {
+      if (cachedVoters.length === 0) return alert('No voter codes to export.');
+      let csv = "Voter_ID,Name,Status\n" + cachedVoters.map(v => `"${v.voter_id}","${v.name || ''}","${v.has_voted ? 'Voted' : 'Ready'}"`).join('\n');
+      const dataStr = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `voter_codes_${Date.now()}.csv`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    };
+
+
+    // ── CONTESTANTS & POSITIONS MANAGER ──────────────────────
+    async function loadContestants() {
+      try {
+        let positions = await req('/rest/v1/positions?select=*,candidates(*)&order=sort_order.asc');
+        let html = '';
+
+        if (!positions || positions.length === 0) {
+          html = `<div class="card" style="text-align:center; color:var(--muted); padding:3rem;">No positions created yet. Use the form above to add your first position (e.g. "President").</div>`;
+        } else {
+          positions.forEach(p => {
+            html += `<div class="card" style="margin-bottom:1.5rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
+                <h3 style="font-size:1.15rem; color:#fff;">🏆 ${esc(p.name)}</h3>
+                <button class="btn btn-danger btn-sm" onclick="deletePosition(${p.id}, '${esc(p.name)}')">Delete Position</button>
+              </div>
+
+              <div style="margin-bottom:1rem;">
+                <label class="eyebrow">Candidates / Contestants</label>`;
+
+            let cands = p.candidates || [];
+            if (cands.length === 0) {
+              html += `<div style="color:var(--muted); font-size:0.85rem; padding:0.5rem 0;">No candidates added to this position yet.</div>`;
+            } else {
+              cands.forEach(c => {
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(15,22,36,0.6); border:1px solid var(--border); border-radius:10px; margin-bottom:0.5rem;">
+                  <span style="font-weight:600;">👤 ${esc(c.name)}</span>
+                  <button class="btn btn-danger btn-sm" onclick="deleteCandidate(${c.id}, '${esc(c.name)}')">Remove</button>
+                </div>`;
+              });
+            }
+
+            html += `</div>
+              <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                <input class="input" id="newCand_${p.id}" placeholder="New candidate name..." style="flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="addCandidate(${p.id})">+ Add Candidate</button>
+              </div>
+            </div>`;
+          });
+        }
+
+        $('#contestantsContainer').innerHTML = html;
+      } catch (e) {
+        showBanner('#globalMsg', 'Error loading positions: ' + e.message, true);
+      }
+    }
+
+    // Add Position
+    $('#addPosBtn').onclick = async () => {
+      let name = $('#newPosName').value.trim();
+      if (!name) return alert('Enter position title.');
+
+      try {
+        await req('/rest/v1/positions', { name, sort_order: Date.now() });
+        showBanner('#globalMsg', `Position "${name}" created successfully!`);
+        $('#newPosName').value = '';
+        loadContestants();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    // Delete Position
+    window.deletePosition = async function(id, name) {
+      if (!confirm(`Delete position "${name}" and all its candidates?`)) return;
+      try {
+        await req(`/rest/v1/positions?id=eq.${id}`, null, true, false, 'DELETE');
+        showBanner('#globalMsg', `Position "${name}" deleted.`);
+        loadContestants();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    // Add Candidate
+    window.addCandidate = async function(positionId) {
+      let input = $(`#newCand_${positionId}`);
+      let name = input ? input.value.trim() : '';
+      if (!name) return alert('Enter candidate name.');
+
+      try {
+        await req('/rest/v1/candidates', { position_id: positionId, name });
+        showBanner('#globalMsg', `Candidate "${name}" added!`);
+        loadContestants();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    // Delete Candidate
+    window.deleteCandidate = async function(id, name) {
+      if (!confirm(`Remove candidate "${name}"?`)) return;
+      try {
+        await req(`/rest/v1/candidates?id=eq.${id}`, null, true, false, 'DELETE');
+        showBanner('#globalMsg', `Candidate "${name}" removed.`);
+        loadContestants();
+        loadStats();
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+
+    // ── POLLING OFFICERS ────────────────────────────────────
+    $('#addOneBtn').onclick = async () => {
+      try {
+        let email = $('#oneEmail').value.trim();
+        let password = $('#onePassword').value;
+        if (!email || password.length < 8) throw Error('Enter valid email & 8+ char password.');
+        
+        let d = await createUsers([{ email, password, role: 'operator' }]);
+        showBanner('#globalMsg', d.message || 'Officer created successfully!');
+        $('#oneEmail').value = '';
+        $('#onePassword').value = '';
+        if (CFG.logUrl) {
+          fetch(CFG.logUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ voterId: email, voterName: 'Polling Officer', positions: [{ position: 'Officer Created', candidate: email, isAbstain: false }], castAt: new Date().toISOString() })
+          }).catch(() => {});
+        }
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    $('#csvInput').onchange = async e => {
+      let f = e.target.files[0];
+      if (!f) return;
+      $('#csvName').textContent = f.name;
+      let text = await f.text();
+      let lines = text.split(/\r?\n/).filter(Boolean);
+      let headers = lines.shift().split(',').map(x => x.trim().toLowerCase());
+      
+      csvRows = lines.map(line => {
+        let v = line.split(',').map(x => x.trim());
+        let o = {};
+        headers.forEach((h, i) => o[h] = v[i] || '');
+        return { email: o.email, password: o.password, role: o.role || 'operator' };
+      }).filter(x => x.email && x.password);
+
+      $('#importCsvBtn').disabled = !csvRows.length;
+      $('#csvName').textContent = `${f.name} (${csvRows.length} valid entries found)`;
+    };
+
+    $('#importCsvBtn').onclick = async () => {
+      try {
+        if (csvRows.length > 100) throw Error('Batch limit is 100 officers per upload.');
+        let d = await createUsers(csvRows);
+        showBanner('#globalMsg', d.message || 'CSV Import completed');
+        if (CFG.logUrl && d.results) {
+          d.results.filter(x => x.ok).forEach(x => {
+            fetch(CFG.logUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ voterId: x.email, voterName: 'Polling Officer', positions: [{ position: 'Officer Created (CSV)', candidate: x.email, isAbstain: false }], castAt: new Date().toISOString() })
+            }).catch(() => {});
+          });
+        }
+        if (!d || !Array.isArray(d.results)) {
+          throw Error(d && d.error ? d.error : 'Unexpected response from user creation service.');
+        }
+        let html = `<div class="table-container"><table><tr><th>Email</th><th>Status</th></tr>`;
+        d.results.forEach(x => {
+          html += `<tr><td>${esc(x.email)}</td><td style="color:${x.ok ? 'var(--emerald)' : 'var(--rose)'}">${esc(x.ok ? 'Created' : x.error)}</td></tr>`;
+        });
+        html += `</table></div>`;
+        $('#usersOut').innerHTML = html;
+      } catch (e) {
+        showBanner('#globalMsg', e.message, true);
+      }
+    };
+
+    async function createUsers(users) {
+      try {
+        let r = await fetch(CFG.functionUrl, {
+          method: 'POST',
+          headers: {
+            apikey: CFG.key,
+            Authorization: 'Bearer ' + session.token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ users })
+        });
+        let d = await r.json().catch(() => null);
+        if (r.ok && d) return d;
+        // Edge Function returned an error body (e.g. "Admin role required", missing secret)
+        if (d && d.error) throw Error(d.error);
+      } catch (e) {
+        if (e.message) throw e;
+      }
+
+      const results = [];
+      for (const u of users) {
+        try {
+          let res = await fetch(CFG.url + '/auth/v1/signup', {
+            method: 'POST',
+            headers: {
+              apikey: CFG.key,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ email: u.email, password: u.password })
+          });
+          let data = await res.json().catch(() => null);
+          if (!res.ok) throw Error(data?.error_description || data?.msg || data?.message || 'User creation failed');
+
+          if (data.user && data.user.id) {
+            await fetch(CFG.url + '/rest/v1/staff', {
+              method: 'POST',
+              headers: {
+                apikey: CFG.key,
+                Authorization: 'Bearer ' + session.token,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+              },
+              body: JSON.stringify({ user_id: data.user.id, role: u.role || 'operator' })
+            }).catch(() => null);
+          }
+
+          results.push({ email: u.email, ok: true, role: u.role || 'operator' });
+        } catch (err) {
+          let msg = err.message;
+          if (msg.includes('rate limit')) {
+            msg = 'Supabase Email Rate Limit Exceeded. Adjust under Supabase -> Auth -> Rate Limits.';
+          }
+          results.push({ email: u.email, ok: false, error: msg });
+        }
+      }
+
+      const countOk = results.filter(r => r.ok).length;
+      if (countOk === 0 && results.length > 0) {
+        throw Error(results[0].error || 'User creation failed');
+      }
+
+      return {
+        message: `Processed ${results.length} user(s) (${countOk} created)`,
+        results
+      };
+    }
+
+    // ── SETTINGS ───────────────────────────────────────────
+    async function loadSettings() {
+      try {
+        const settings = await rpc('election_settings', {}, true);
+        const title = settings?.app_title || 'Youth Election Terminal';
+        const status = settings?.election_status || 'open';
+        
+        $('#appTitle').textContent = title + ' Admin';
+        $('#appTitleInput').value = title;
+        $('#electionStatusSelect').value = status;
+      } catch (e) {
+        showBanner('#globalMsg', 'Could not load application settings: ' + e.message, true);
+      }
+    }
+
+    $('#saveTitleBtn').onclick = async () => {
+      const title = $('#appTitleInput').value.trim();
+      if (!title) return alert('Enter an application title.');
+      
+      try {
+        const r = await rpc('update_election_title', { p_title: title });
+        $('#appTitle').textContent = r.app_title + ' Admin';
+        showBanner('#globalMsg', 'Application title saved successfully!');
+      } catch (e) { 
+        showBanner('#globalMsg', e.message, true); 
+      }
+    };
+
+    $('#saveStatusBtn').onclick = async () => {
+      const status = $('#electionStatusSelect').value;
+      if (!confirm(`Change election status to "${status}"? This will ${status === 'open' ? 'enable' : 'disable'} voting.`)) return;
+      
+      try {
+        await rpc('update_election_status', { p_status: status });
+        showBanner('#globalMsg', `Election status updated to: ${status}`);
+      } catch (e) { 
+        showBanner('#globalMsg', e.message, true); 
+      }
+    };
+
+    $('#resetElectionBtn').onclick = async () => {
+      const confirmation = $('#resetConfirmation').value.trim();
+      if (confirmation !== 'RESET') return alert('Type RESET exactly to enable this action.');
+      if (!confirm('This will permanently remove election data. Do you want to continue?')) return;
+      
+      const btn = $('#resetElectionBtn');
+      btn.disabled = true;
+      btn.textContent = 'Resetting…';
+      
+      try {
+        const r = await rpc('reset_election', {
+          p_confirmation: confirmation,
+          p_delete_voters: $('#resetVoters').checked,
+          p_delete_structure: $('#resetStructure').checked
+        });
+        
+        $('#resetConfirmation').value = '';
+        $('#resetVoters').checked = false;
+        $('#resetStructure').checked = false;
+        lastStatsData = null;
+        cachedVoters = [];
+        
+        showBanner('#globalMsg', r.message || 'Election data was reset.');
+        await loadStats();
+      } catch (e) { 
+        showBanner('#globalMsg', e.message, true); 
+      } finally { 
+        btn.disabled = false; 
+        btn.textContent = 'Reset Election Data'; 
+      }
+    };
+
+    // EXPORT JSON
+    $('#downloadCsvBtn').onclick = () => {
+      if (!lastStatsData) return alert('No results data loaded yet.');
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastStatsData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `youth_election_results_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    };
+
+    updateUIState();
+  </script>
+</body>
+</html>
