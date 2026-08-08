@@ -11,8 +11,17 @@ CREATE TABLE IF NOT EXISTS staff (
   created_at  timestamptz DEFAULT now()
 );
 
--- 1.5 ⚠️ MAKE YOUR ACCOUNT ADMIN (change the email before running)
--- Run this AFTER you have created your user in Authentication → Users.
+-- 1.4 CREATE THE ADMIN AUTH USER (so it shows in Authentication → Users)
+-- Change the email/password below. email_confirm=true lets you log in instantly.
+select auth.admin_create_user(
+  jsonb_build_object(
+    'email', 'obiajuluonuchukwu@gmail.com',
+    'password', 'ChangeMe123!',
+    'email_confirm', true
+  )
+);
+
+-- 1.5 ⚠️ MAKE YOUR ACCOUNT ADMIN (links the auth user to staff role)
 -- Safe to re-run; it only sets the admin role.
 INSERT INTO staff (user_id, role)
 SELECT id, 'admin'
