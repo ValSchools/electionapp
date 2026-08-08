@@ -515,10 +515,10 @@
       } catch (e) { return false; }
     }
 
-    async function req(path, body, auth = true, isRetry = false, customMethod = null) {
+    async function req(path, body, auth = true, isRetry = false, customMethod = null, token = null) {
       let headers = {
         apikey: CFG.key,
-        Authorization: 'Bearer ' + (auth && session ? session.token : CFG.key),
+        Authorization: 'Bearer ' + (token || (auth && session ? session.token : CFG.key)),
         'Content-Type': 'application/json',
         'Prefer': 'return=representation'
       };
@@ -541,8 +541,8 @@
       return d;
     }
 
-    async function rpc(fn, args = {}, publicOnly = false) {
-      return req('/rest/v1/rpc/' + fn, args, !publicOnly);
+    async function rpc(fn, args = {}, publicOnly = false, token = null) {
+      return req('/rest/v1/rpc/' + fn, args, !publicOnly, false, null, token);
     }
 
     function showBanner(targetId, msg, isError = false) {
@@ -585,9 +585,9 @@
 
         let role = 'operator';
         try {
-          const ea = await rpc('ensure_admin');
+          const ea = await rpc('ensure_admin', {}, false, a.access_token);
           console.log('ensure_admin ->', ea);
-          const r = await rpc('my_role');
+          const r = await rpc('my_role', {}, false, a.access_token);
           console.log('my_role ->', r);
           if (r) role = r;
         } catch (roleErr) {
