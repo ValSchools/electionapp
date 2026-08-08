@@ -43,10 +43,12 @@ ALTER TABLE registered_voters ADD COLUMN IF NOT EXISTS has_voted boolean DEFAULT
 CREATE TABLE IF NOT EXISTS positions (
   id          serial PRIMARY KEY,
   name        text UNIQUE NOT NULL,
-  sort_order  integer DEFAULT 0
+  sort_order  bigint DEFAULT 0
 );
 -- Safely add sort_order if table already existed without it
-ALTER TABLE positions ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0;
+ALTER TABLE positions ADD COLUMN IF NOT EXISTS sort_order bigint DEFAULT 0;
+-- Convert existing integer column to bigint so Date.now() timestamps fit
+ALTER TABLE positions ALTER COLUMN sort_order TYPE bigint;
 
 -- 4. CANDIDATES TABLE
 CREATE TABLE IF NOT EXISTS candidates (
