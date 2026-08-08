@@ -25,6 +25,10 @@
     {
       "name": "Admin Dashboard",
       "url": "/electionapp/admin.html"
+    },
+    {
+      "name": "Live Results Board",
+      "url": "/electionapp/live.html"
     }
   ]
 }

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Live Election Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#060912; --card:rgba(20,28,46,0.75); --border:rgba(255,255,255,0.08);
+      --text:#f3f4f6; --muted:#94a3b8; --accent:#8b5cf6; --cyan:#06b6d4; --gold:#fbbf24;
+    }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body {
+      background:var(--bg);
+      background-image:radial-gradient(at 0% 0%, rgba(139,92,246,0.18) 0, transparent 50%),
+                       radial-gradient(at 100% 100%, rgba(6,182,212,0.12) 0, transparent 50%);
+      background-attachment:fixed; color:var(--text);
+      font-family:'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; min-height:100vh; padding:1.5rem;
+    }
+    .top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
+    h1 { font-size:clamp(1.4rem,3.5vw,2.4rem); font-weight:800; }
+    .pill { background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:.5rem 1rem; border-radius:999px; font-size:.85rem; color:var(--muted); }
+    .pill b { color:var(--text); }
+    .dot { display:inline-block; width:.6rem; height:.6rem; border-radius:50%; background:#22c55e; margin-right:.4rem; animation:pulse 1.6s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:1.25rem; }
+    .card { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.25rem; backdrop-filter:blur(10px); }
+    .card h2 { font-size:1.05rem; margin-bottom:.25rem; display:flex; align-items:center; justify-content:space-between; }
+    .winner { font-size:.8rem; color:var(--gold); font-weight:700; }
+    .chart-wrap { position:relative; height:260px; margin-top:.75rem; }
+    .empty { text-align:center; color:var(--muted); padding:4rem 1rem; }
+    .updated { font-size:.75rem; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1 id="title">🗳 Live Election Results</h1>
+    <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+      <span class="pill"><span class="dot"></span>LIVE</span>
+      <span class="pill">Ballots: <b id="ballots">0</b></span>
+      <span class="pill">Turnout: <b id="turnout">0%</b></span>
+      <span class="pill updated" id="updated">—</span>
+    </div>
+  </div>
+  <div id="board" class="grid"><div class="empty">Loading results…</div></div>
+
+  <script>
+    const CFG = {
+      url: 'https://qxnnvrutncabawodyznl.supabase.co',
+      key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4bm52cnV0bmNhYmF3b2R5em5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNTg0MjEsImV4cCI6MjEwMTczNDQyMX0.oLIy2heucbVnqaYrWBAKR7bjZSlZfm4Vgmr1CXY_NBg'
+    };
+    const charts = {};
+    const esc = s => String(s).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+
+    async function load() {
+      try {
+        const r = await fetch(CFG.url + '/rest/v1/rpc/election_results', {
+          method:'POST', headers:{ apikey:CFG.key, Authorization:'Bearer '+CFG.key, 'Content-Type':'application/json' }, body:'{}'
+        });
+        const data = await r.json();
+        render(data);
+      } catch (e) {
+        document.getElementById('board').innerHTML = '<div class="empty">Could not load results. Retrying…</div>';
+      }
+    }
+
+    function render(data) {
+      document.getElementById('title').textContent = '🗳 ' + (data.app_title || 'Live Election Results');
+      const ballots = data.ballots || 0, registered = data.registered || 0;
+      document.getElementById('ballots').textContent = ballots;
+      document.getElementById('turnout').textContent = (registered ? Math.round(ballots/registered*100) : 0) + '%';
+      document.getElementById('updated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+      const positions = data.positions || [];
+      const board = document.getElementById('board');
+      if (!positions.length) { board.innerHTML = '<div class="empty">No positions configured yet.</div>'; return; }
+
+      board.innerHTML = '';
+      positions.forEach((p, i) => {
+        const cands = (p.candidates || []).slice().sort((a,b)=>(b.votes||0)-(a.votes||0));
+        const max = cands.length ? (cands[0].votes||0) : 0;
+        const winner = (max > 0 && cands[0]) ? cands[0].name : null;
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<h2><span>${esc(p.name)}</span>${winner ? '<span class="winner">👑 '+esc(winner)+'</span>' : ''}</h2>
+          <div class="chart-wrap"><canvas id="c${i}"></canvas></div>`;
+        board.appendChild(card);
+
+        const labels = cands.map(c=>c.name);
+        const vals = cands.map(c=>c.votes||0);
+        const colors = cands.map((c,idx)=> idx===0 && max>0 ? 'rgba(251,191,36,0.85)' : 'rgba(139,92,246,0.7)');
+        const ctx = card.querySelector('canvas').getContext('2d');
+        if (charts[i]) charts[i].destroy();
+        charts[i] = new Chart(ctx, {
+          type:'bar',
+          data:{ labels, datasets:[{ label:'Votes', data:vals, backgroundColor:colors, borderRadius:8 }] },
+          options:{
+            responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ' '+c.parsed.y+' votes' } } },
+            scales:{ x:{ ticks:{ color:'#cbd5e1' }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:'#cbd5e1', precision:0 }, grid:{ color:'rgba(255,255,255,0.06)' } } }
+          }
+        });
+      });
+    }
+
+    load();
+    setInterval(load, 5000);
+  </script>
+</body>
+</html>

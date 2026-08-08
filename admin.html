@@ -218,6 +218,51 @@
     .tag-voted { background: rgba(244, 63, 94, 0.15); color: #fca5a5; border: 1px solid rgba(244, 63, 94, 0.3); }
 
     .hidden { display: none !important; }
+
+    /* ===== DataTable component ===== */
+    .dt-toolbar { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .dt-search { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+    .dt-search input {
+      width: 100%; padding: 0.6rem 0.9rem 0.6rem 2.2rem; border-radius: 10px;
+      border: 1px solid var(--border); background: rgba(9, 13, 22, 0.6); color: var(--text);
+      font-family: var(--font); font-size: 0.9rem; outline: none; transition: border-color .15s;
+    }
+    .dt-search input:focus { border-color: var(--border-accent); }
+    .dt-search::before { content: "🔎"; position: absolute; left: 0.7rem; top: 50%; transform: translateY(-50%); opacity: .6; font-size: .85rem; }
+    .dt-meta { color: var(--muted); font-size: 0.8rem; white-space: nowrap; }
+    .dt-table-wrap { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }
+    .dt-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .dt-table th {
+      text-align: left; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: .04em;
+      padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);
+      cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    .dt-table th:hover { color: var(--text); }
+    .dt-table th .sort-ind { color: var(--accent); margin-left: .3rem; }
+    .dt-table td { padding: 0.7rem 0.85rem; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .dt-table tbody tr { transition: background .12s; }
+    .dt-table tbody tr:hover { background: rgba(139, 92, 246, 0.06); }
+    .dt-empty { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
+    .dt-pagination { display: flex; gap: 0.4rem; align-items: center; justify-content: flex-end; margin-top: 1rem; flex-wrap: wrap; }
+    .dt-pagination button {
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.4rem 0.7rem; cursor: pointer; font-family: var(--font); font-size: 0.82rem; transition: all .12s;
+    }
+    .dt-pagination button:hover:not(:disabled) { border-color: var(--border-accent); background: rgba(139,92,246,0.12); }
+    .dt-pagination button:disabled { opacity: .35; cursor: not-allowed; }
+    .dt-pagination .dt-page-info { color: var(--muted); font-size: 0.8rem; margin: 0 0.5rem; }
+    .dt-pagination select {
+      background: rgba(9,13,22,0.6); border: 1px solid var(--border); color: var(--text);
+      border-radius: 8px; padding: 0.35rem 0.5rem; font-family: var(--font); font-size: 0.8rem;
+    }
+    .dt-edit-input {
+      width: 100%; padding: 0.4rem 0.6rem; border-radius: 8px; border: 1px solid var(--border-accent);
+      background: rgba(9,13,22,0.8); color: var(--text); font-family: var(--font); font-size: 0.85rem; outline: none;
+    }
+    .dt-actions { display: flex; gap: 0.4rem; }
+    .row-edit-save { color: #6ee7b7 !important; }
+    .row-edit-cancel { color: #fca5a5 !important; }
+    .dt-loading { text-align: center; color: var(--muted); padding: 2.5rem 1rem; }
   </style>
 </head>
 <body>
@@ -367,9 +412,13 @@
         </div>
 
         <h2 style="font-size: 1.25rem; margin-bottom: 1rem;">Election Positions & Candidates</h2>
-        <div id="contestantsContainer">
-          <div style="color: var(--muted); text-align: center; padding: 3rem;">Loading positions & candidates...</div>
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="font-size: 1.05rem; color:#fff;">🏆 Positions</h3>
+          </div>
+          <div id="positionsTable"></div>
         </div>
+        <div id="candidatesArea"></div>
       </div>
 
       <!-- TAB 4: POLLING OFFICERS -->
@@ -463,12 +512,19 @@
 
       <!-- TAB 5: EXPORT & TOOLS -->
       <div id="tabExport" class="hidden">
-        <div class="card">
-          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Election Data Export</h3>
-          <p class="card-subtitle">Download raw tallies and results.</p>
+        <div class="card" style="margin-bottom:1.5rem;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Election Data Export & Print</h3>
+          <p class="card-subtitle">Download tallies as CSV/JSON or print a clean results sheet. Winners are highlighted automatically.</p>
           <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-            <button class="btn btn-secondary" style="width: auto;" id="downloadCsvBtn">📥 Export Results (JSON)</button>
+            <button class="btn btn-secondary" id="downloadCsvBtn">📥 Export Results (CSV)</button>
+            <button class="btn btn-secondary" id="downloadJsonBtn">🧾 Export Results (JSON)</button>
+            <button class="btn btn-primary" id="printResultsBtn">🖨 Print Results</button>
+            <a class="btn btn-secondary" href="live.html" target="_blank" rel="noopener">📺 Open Live View Board</a>
           </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size: 1.1rem; margin-bottom: 0.75rem;">Results Preview</h3>
+          <div id="exportPreview"><div style="color:var(--muted); padding:1rem;">Loading preview…</div></div>
         </div>
       </div>
 
@@ -503,6 +559,117 @@
 
     const $ = s => document.querySelector(s);
     const esc = s => String(s).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+
+    // ── Reusable DataTable: pagination + search + sort + inline edit/delete ──
+    function DataTable(container, opts) {
+      // opts: { columns:[{key,label,sortable,render,edit?,search?}], rows, pageSize, searchKeys, onEdit, onDelete, emptyText }
+      let state = { rows: opts.rows || [], q: '', page: 1, sortKey: null, sortDir: 1, pageSize: opts.pageSize || 10 };
+      function render() {
+        const q = state.q.trim().toLowerCase();
+        let view = state.rows;
+        if (q && opts.searchKeys) {
+          view = view.filter(r => opts.searchKeys.some(k => String(r[k] ?? '').toLowerCase().includes(q)));
+        }
+        if (state.sortKey) {
+          view = view.slice().sort((a, b) => {
+            const av = a[state.sortKey], bv = b[state.sortKey];
+            if (av == null) return 1; if (bv == null) return -1;
+            return (av < bv ? -1 : av > bv ? 1 : 0) * state.sortDir;
+          });
+        }
+        const total = view.length;
+        const pages = Math.max(1, Math.ceil(total / state.pageSize));
+        if (state.page > pages) state.page = pages;
+        const start = (state.page - 1) * state.pageSize;
+        const pageRows = view.slice(start, start + state.pageSize);
+
+        let html = `<div class="dt-toolbar">
+          <div class="dt-search"><input type="text" placeholder="🔎 Search…" value="${esc(state.q)}"></div>
+          <div class="dt-meta">${total} record(s)${q ? ' (filtered)' : ''}</div>
+        </div>
+        <div class="dt-table-wrap"><table class="dt-table"><thead><tr>`;
+        opts.columns.forEach(c => {
+          const ind = state.sortKey === c.key ? `<span class="sort-ind">${state.sortDir === 1 ? '▲' : '▼'}</span>` : '';
+          html += `<th data-key="${esc(c.key)}"${c.sortable ? '' : ' data-nosort="1"'}>${esc(c.label)}${ind}</th>`;
+        });
+        html += `</tr></thead><tbody>`;
+        if (pageRows.length === 0) {
+          html += `<tr><td colspan="${opts.columns.length}" class="dt-empty">${esc(opts.emptyText || 'No records found.')}</td></tr>`;
+        } else {
+          pageRows.forEach((r, i) => {
+            html += `<tr data-idx="${start + i}">`;
+            opts.columns.forEach(c => {
+              const raw = r[c.key];
+              if (c.edit && r._editing) {
+                html += `<td><input class="dt-edit-input" data-edit="${esc(c.key)}" value="${esc(raw ?? '')}"></td>`;
+              } else {
+                html += `<td>${c.render ? c.render(raw, r) : esc(raw)}</td>`;
+              }
+            });
+            html += `</tr>`;
+          });
+        }
+        html += `</tbody></table></div>`;
+        html += `<div class="dt-pagination">
+          <button class="dt-first" ${state.page === 1 ? 'disabled' : ''}>« First</button>
+          <button class="dt-prev" ${state.page === 1 ? 'disabled' : ''}>‹ Prev</button>
+          <span class="dt-page-info">Page ${state.page} / ${pages}</span>
+          <button class="dt-next" ${state.page === pages ? 'disabled' : ''}>Next ›</button>
+          <button class="dt-last" ${state.page === pages ? 'disabled' : ''}>Last »</button>
+          <select class="dt-size">${[5,10,25,50,100].map(s => `<option value="${s}"${s === state.pageSize ? ' selected' : ''}>${s}/page</option>`).join('')}</select>
+        </div>`;
+
+        container.innerHTML = html;
+
+        container.querySelector('.dt-search input').addEventListener('input', e => {
+          state.q = e.target.value; state.page = 1; render();
+        });
+        container.querySelectorAll('.dt-table th').forEach(th => {
+          if (th.dataset.nosort) return;
+          th.addEventListener('click', () => {
+            const k = th.dataset.key;
+            if (state.sortKey === k) state.sortDir *= -1; else { state.sortKey = k; state.sortDir = 1; }
+            render();
+          });
+        });
+        container.querySelector('.dt-first').addEventListener('click', () => { state.page = 1; render(); });
+        container.querySelector('.dt-prev').addEventListener('click', () => { state.page--; render(); });
+        container.querySelector('.dt-next').addEventListener('click', () => { state.page++; render(); });
+        container.querySelector('.dt-last').addEventListener('click', () => { state.page = pages; render(); });
+        container.querySelector('.dt-size').addEventListener('change', e => { state.pageSize = parseInt(e.target.value, 10); state.page = 1; render(); });
+
+        if (opts.onEdit || opts.onDelete) {
+          container.querySelectorAll('.dt-table tbody tr').forEach(tr => {
+            const idx = parseInt(tr.dataset.idx, 10);
+            const r = state.rows[idx];
+            if (!r) return;
+            if (r._editing) {
+              tr.querySelectorAll('[data-edit]').forEach(inp => inp.addEventListener('keydown', ev => {
+                if (ev.key === 'Enter') commitEdit(r, container, opts);
+                if (ev.key === 'Escape') { r._editing = false; render(); }
+              }));
+            } else {
+              const editBtn = tr.querySelector('[data-action="edit"]');
+              const delBtn = tr.querySelector('[data-action="delete"]');
+              if (editBtn) editBtn.addEventListener('click', () => api.startEdit(r));
+              if (delBtn && opts.onDelete) delBtn.addEventListener('click', () => opts.onDelete(r));
+            }
+          });
+        }
+      }
+      function commitEdit(r, cont, o) {
+        const updates = {};
+        cont.querySelectorAll('[data-edit]').forEach(inp => { updates[inp.dataset.edit] = inp.value; });
+        o.onEdit(r, updates).then(() => { r._editing = false; render(); }).catch(() => { r._editing = false; render(); });
+      }
+      const api = {
+        setRows(rows) { state.rows = rows || []; state.page = 1; render(); },
+        refresh() { render(); },
+        startEdit(r) { state.rows.forEach(x => x._editing = false); r._editing = true; render(); },
+        render
+      };
+      return api;
+    }
 
     async function refreshSessionToken() {
       if (!session || !session.refresh) return false;
@@ -643,6 +810,7 @@
       if (tabName === 'contestants') loadContestants();
       if (tabName === 'settings') loadSettings();
       if (tabName === 'officers') loadOfficers();
+      if (tabName === 'export') loadExportPreview();
     };
 
     // ── POLLING OFFICERS LIST ────────────────────────────────
@@ -719,29 +887,36 @@
     $('#refreshBtn').onclick = loadStats;
     setInterval(() => session && loadStats(), 15000);
 
-    // ── VOTER CODES GENERATOR ───────────────────────────────
+    // ── VOTER CODES GENERATOR (DataTable) ──────────────────
+    let votersTable = null;
     async function loadVoters() {
       try {
-        let voters = await req('/rest/v1/registered_voters?select=*');
+        let voters = await req('/rest/v1/registered_voters?select=*&order=voter_id.asc');
         cachedVoters = voters || [];
-
-        let html = `<div class="table-container"><table>
-          <tr><th>Voter ID Code</th><th>Name</th><th>Status</th><th>Action</th></tr>`;
-        
-        if (cachedVoters.length === 0) {
-          html += `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:2rem;">No voter codes generated yet. Use the generator on the left to create codes.</td></tr>`;
-        } else {
-          cachedVoters.forEach(v => {
-            html += `<tr>
-              <td><strong style="font-family:monospace; font-size:0.95rem; color:var(--cyan);">${esc(v.voter_id)}</strong></td>
-              <td>${esc(v.name || 'Anonymous')}</td>
-              <td>${v.has_voted ? '<span class="tag-badge tag-voted">🔴 Voted</span>' : '<span class="tag-badge tag-unused">🟢 Ready</span>'}</td>
-              <td><button class="btn btn-danger btn-sm" onclick="deleteVoter('${esc(v.voter_id)}')">Delete</button></td>
-            </tr>`;
+        if (!votersTable) {
+          votersTable = DataTable($('#voterListContainer'), {
+            pageSize: 10,
+            searchKeys: ['voter_id', 'name'],
+            emptyText: 'No voter codes generated yet. Use the generator on the left to create codes.',
+            columns: [
+              { key: 'voter_id', label: 'Voter ID Code', sortable: true, render: v => `<strong style="font-family:monospace; font-size:0.95rem; color:var(--cyan);">${esc(v)}</strong>` },
+              { key: 'name', label: 'Name', sortable: true, edit: true, render: v => esc(v || 'Anonymous') },
+              { key: 'has_voted', label: 'Status', sortable: true, render: v => v ? '<span class="tag-badge tag-voted">🔴 Voted</span>' : '<span class="tag-badge tag-unused">🟢 Ready</span>' },
+              { key: 'actions', label: 'Action', render: (v, r) => `<div class="dt-actions"><button class="btn btn-secondary btn-sm" data-action="edit">✏️ Edit</button><button class="btn btn-danger btn-sm" data-action="delete">🗑 Delete</button></div>` }
+            ],
+            onEdit: async (r, updates) => {
+              await req(`/rest/v1/registered_voters?voter_id=eq.${encodeURIComponent(r.voter_id)}`, { name: updates.name }, true, false, 'PATCH');
+              showBanner('#globalMsg', `Voter ${r.voter_id} updated.`);
+              loadVoters();
+            },
+            onDelete: async (r) => {
+              if (!confirm(`Delete voter code "${r.voter_id}"?`)) { votersTable.refresh(); return; }
+              await deleteVoter(r.voter_id, true);
+              loadVoters();
+            }
           });
         }
-        html += `</table></div>`;
-        $('#voterListContainer').innerHTML = html;
+        votersTable.setRows(cachedVoters);
       } catch (e) {
         showBanner('#globalMsg', 'Error loading voter codes: ' + e.message, true);
       }
@@ -788,15 +963,16 @@
     };
 
     // Delete Voter
-    window.deleteVoter = async function(voterId) {
-      if (!confirm(`Delete voter code ${voterId}?`)) return;
+    window.deleteVoter = async function(voterId, silent) {
+      if (!silent && !confirm(`Delete voter code ${voterId}?`)) return;
       try {
         await req(`/rest/v1/registered_voters?voter_id=eq.${encodeURIComponent(voterId)}`, null, true, false, 'DELETE');
-        showBanner('#globalMsg', `Deleted voter ${voterId}`);
+        if (!silent) showBanner('#globalMsg', `Deleted voter ${voterId}`);
         loadVoters();
         loadStats();
       } catch (e) {
-        showBanner('#globalMsg', e.message, true);
+        if (!silent) showBanner('#globalMsg', e.message, true);
+        throw e;
       }
     };
 
@@ -822,74 +998,97 @@
     };
 
 
-    // ── CONTESTANTS & POSITIONS MANAGER ──────────────────────
+    // ── CONTESTANTS & POSITIONS MANAGER (DataTable) ─────────
+    let positionsTable = null;
+    const candidateTables = {};
     async function loadContestants() {
       try {
         let positions = await req('/rest/v1/positions?select=*,candidates(*)&order=sort_order.asc');
-        let html = '';
-
-        if (!positions || positions.length === 0) {
-          html = `<div class="card" style="text-align:center; color:var(--muted); padding:3rem;">No positions created yet. Use the form above to add your first position (e.g. "President").</div>`;
-        } else {
-          positions.forEach(p => {
-            html += `<div class="card" style="margin-bottom:1.5rem;">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid var(--border); padding-bottom:0.75rem;">
-                <h3 style="font-size:1.15rem; color:#fff;">🏆 ${esc(p.name)}</h3>
-                <button class="btn btn-danger btn-sm" onclick="deletePosition(${p.id}, '${esc(p.name)}')">Delete Position</button>
-              </div>
-
-              <div style="margin-bottom:1rem;">
-                <label class="eyebrow">Candidates / Contestants</label>`;
-
-            let cands = p.candidates || [];
-            if (cands.length === 0) {
-              html += `<div style="color:var(--muted); font-size:0.85rem; padding:0.5rem 0;">No candidates added to this position yet.</div>`;
-            } else {
-              cands.forEach(c => {
-                html += `<div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem 0.8rem; background:rgba(15,22,36,0.6); border:1px solid var(--border); border-radius:10px; margin-bottom:0.5rem;">
-                  <span style="font-weight:600;">👤 ${esc(c.name)}</span>
-                  <button class="btn btn-danger btn-sm" onclick="deleteCandidate(${c.id}, '${esc(c.name)}')">Remove</button>
-                </div>`;
-              });
+        positions = positions || [];
+        if (!positionsTable) {
+          positionsTable = DataTable($('#positionsTable'), {
+            pageSize: 10,
+            searchKeys: ['name'],
+            emptyText: 'No positions created yet. Use the form above to add your first position (e.g. "President").',
+            columns: [
+              { key: 'id', label: 'ID', sortable: true, render: v => `<span style="color:var(--muted)">#${esc(v)}</span>` },
+              { key: 'name', label: 'Position Title', sortable: true, edit: true, render: v => `<span style="font-weight:600;">🏆 ${esc(v)}</span>` },
+              { key: 'candidates', label: '# Candidates', sortable: false, render: (v) => `<span class="tag-badge tag-unused">${(v || []).length}</span>` },
+              { key: 'actions', label: 'Action', render: () => `<div class="dt-actions"><button class="btn btn-secondary btn-sm" data-action="edit">✏️ Edit</button><button class="btn btn-danger btn-sm" data-action="delete">🗑 Delete</button></div>` }
+            ],
+            onEdit: async (r, updates) => {
+              await req(`/rest/v1/positions?id=eq.${r.id}`, { name: updates.name }, true, false, 'PATCH');
+              showBanner('#globalMsg', `Position renamed to "${updates.name}".`);
+              loadContestants(); loadStats();
+            },
+            onDelete: async (r) => {
+              if (!confirm(`Delete position "${r.name}" and all its candidates?`)) { positionsTable.refresh(); return; }
+              await req(`/rest/v1/positions?id=eq.${r.id}`, null, true, false, 'DELETE');
+              showBanner('#globalMsg', `Position "${r.name}" deleted.`);
+              loadContestants(); loadStats();
             }
-
-            html += `</div>
-              <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-                <input class="input" id="newCand_${p.id}" placeholder="New candidate name..." style="flex:1;">
-                <button class="btn btn-secondary btn-sm" onclick="addCandidate(${p.id})">+ Add Candidate</button>
-              </div>
-            </div>`;
           });
         }
-
-        $('#contestantsContainer').innerHTML = html;
+        positionsTable.setRows(positions);
+        renderCandidatesArea(positions);
       } catch (e) {
         showBanner('#globalMsg', 'Error loading positions: ' + e.message, true);
       }
+    }
+
+    function renderCandidatesArea(positions) {
+      const area = $('#candidatesArea');
+      if (!positions.length) { area.innerHTML = ''; return; }
+      let html = '';
+      positions.forEach(p => {
+        html += `<div class="card" style="margin-bottom:1.5rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+            <h3 style="font-size:1.05rem; color:#fff;">👤 Candidates — ${esc(p.name)}</h3>
+          </div>
+          <div id="candTable_${p.id}"></div>
+          <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+            <input class="input" id="newCand_${p.id}" placeholder="New candidate name..." style="flex:1;">
+            <button class="btn btn-secondary btn-sm" onclick="addCandidate(${p.id})">+ Add Candidate</button>
+          </div>
+        </div>`;
+      });
+      area.innerHTML = html;
+
+      positions.forEach(p => {
+        const cands = p.candidates || [];
+        candidateTables[p.id] = DataTable($(`#candTable_${p.id}`), {
+          pageSize: 10,
+          searchKeys: ['name'],
+          emptyText: 'No candidates added to this position yet.',
+          columns: [
+            { key: 'id', label: 'ID', sortable: true, render: v => `<span style="color:var(--muted)">#${esc(v)}</span>` },
+            { key: 'name', label: 'Candidate Name', sortable: true, edit: true, render: v => esc(v) },
+            { key: 'actions', label: 'Action', render: () => `<div class="dt-actions"><button class="btn btn-secondary btn-sm" data-action="edit">✏️ Edit</button><button class="btn btn-danger btn-sm" data-action="delete">🗑 Remove</button></div>` }
+          ],
+          onEdit: async (r, updates) => {
+            await req(`/rest/v1/candidates?id=eq.${r.id}`, { name: updates.name }, true, false, 'PATCH');
+            showBanner('#globalMsg', `Candidate renamed to "${updates.name}".`);
+            loadContestants(); loadStats();
+          },
+          onDelete: async (r) => {
+            if (!confirm(`Remove candidate "${r.name}"?`)) { candidateTables[p.id].refresh(); return; }
+            await req(`/rest/v1/candidates?id=eq.${r.id}`, null, true, false, 'DELETE');
+            showBanner('#globalMsg', `Candidate "${r.name}" removed.`);
+            loadContestants(); loadStats();
+          }
+        });
+        candidateTables[p.id].setRows(cands);
+      });
     }
 
     // Add Position
     $('#addPosBtn').onclick = async () => {
       let name = $('#newPosName').value.trim();
       if (!name) return alert('Enter position title.');
-
       try {
         await req('/rest/v1/positions', { name, sort_order: Date.now() });
         showBanner('#globalMsg', `Position "${name}" created successfully!`);
         $('#newPosName').value = '';
-        loadContestants();
-        loadStats();
-      } catch (e) {
-        showBanner('#globalMsg', e.message, true);
-      }
-    };
-
-    // Delete Position
-    window.deletePosition = async function(id, name) {
-      if (!confirm(`Delete position "${name}" and all its candidates?`)) return;
-      try {
-        await req(`/rest/v1/positions?id=eq.${id}`, null, true, false, 'DELETE');
-        showBanner('#globalMsg', `Position "${name}" deleted.`);
         loadContestants();
         loadStats();
       } catch (e) {
@@ -902,10 +1101,10 @@
       let input = $(`#newCand_${positionId}`);
       let name = input ? input.value.trim() : '';
       if (!name) return alert('Enter candidate name.');
-
       try {
         await req('/rest/v1/candidates', { position_id: positionId, name });
         showBanner('#globalMsg', `Candidate "${name}" added!`);
+        input.value = '';
         loadContestants();
         loadStats();
       } catch (e) {
@@ -913,18 +1112,6 @@
       }
     };
 
-    // Delete Candidate
-    window.deleteCandidate = async function(id, name) {
-      if (!confirm(`Remove candidate "${name}"?`)) return;
-      try {
-        await req(`/rest/v1/candidates?id=eq.${id}`, null, true, false, 'DELETE');
-        showBanner('#globalMsg', `Candidate "${name}" removed.`);
-        loadContestants();
-        loadStats();
-      } catch (e) {
-        showBanner('#globalMsg', e.message, true);
-      }
-    };
 
 
     // ── POLLING OFFICERS ────────────────────────────────────
@@ -1136,16 +1323,103 @@
       }
     };
 
-    // EXPORT JSON
+    // ── EXPORT & PRINT RESULTS ──────────────────────────────
+    async function loadExportPreview() {
+      try {
+        lastStatsData = await rpc('election_results', {}, true);
+        const rows = buildResultsRows(lastStatsData);
+        let html = `<div class="dt-table-wrap"><table class="dt-table"><thead><tr>
+          <th>Position</th><th>Candidate</th><th>Votes</th><th>%</th><th>Result</th></tr></thead><tbody>`;
+        if (rows.length === 0) {
+          html += `<tr><td colspan="5" class="dt-empty">No results yet. Add positions/candidates and let voting begin.</td></tr>`;
+        } else {
+          rows.forEach(r => {
+            html += `<tr>
+              <td>${esc(r.position)}</td>
+              <td>${esc(r.candidate)}</td>
+              <td>${r.votes}</td>
+              <td>${r.pct}%</td>
+              <td>${r.isWinner ? '<span class="tag-badge tag-unused" style="background:rgba(245,158,11,0.15);color:#fcd34d;border-color:rgba(245,158,11,0.3);">👑 WINNER</span>' : ''}</td>
+            </tr>`;
+          });
+        }
+        const turn = lastStatsData.registered ? Math.round((lastStatsData.ballots / lastStatsData.registered) * 100) : 0;
+        html += `</tbody></table></div>
+          <div style="margin-top:0.75rem;color:var(--muted);font-size:0.82rem;">
+            Ballots cast: <b style="color:var(--text)">${lastStatsData.ballots || 0}</b> &nbsp;|&nbsp;
+            Registered: <b style="color:var(--text)">${lastStatsData.registered || 0}</b> &nbsp;|&nbsp;
+            Turnout: <b style="color:var(--text)">${turn}%</b>
+          </div>`;
+        $('#exportPreview').innerHTML = html;
+      } catch (e) {
+        $('#exportPreview').innerHTML = `<div style="color:#ff6b6b;">Failed to load preview: ${esc(e.message || e)}</div>`;
+      }
+    }
+
+    function buildResultsRows(data) {
+      const rows = [];
+      (data.positions || []).forEach(p => {
+        const cands = (p.candidates || []).slice().sort((a, b) => (b.votes || 0) - (a.votes || 0));
+        const max = cands.length ? cands[0].votes || 0 : 0;
+        const total = cands.reduce((s, c) => s + (c.votes || 0), 0) || 1;
+        cands.forEach((c, i) => {
+          rows.push({
+            position: p.name,
+            candidate: c.name,
+            votes: c.votes || 0,
+            pct: Math.round(((c.votes || 0) / total) * 100),
+            isWinner: i === 0 && max > 0
+          });
+        });
+      });
+      return rows;
+    }
+
+    function triggerDownload(content, mime, filename) {
+      const blob = new Blob([content], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    }
+
     $('#downloadCsvBtn').onclick = () => {
-      if (!lastStatsData) return alert('No results data loaded yet.');
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(lastStatsData, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `youth_election_results_${Date.now()}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      if (!lastStatsData) return alert('No results data loaded yet. Open this tab to load it.');
+      const rows = buildResultsRows(lastStatsData);
+      let csv = 'Position,Candidate,Votes,Percentage,Result\n';
+      rows.forEach(r => csv += `"${r.position}","${r.candidate}",${r.votes},${r.pct}%,"${r.isWinner ? 'WINNER' : ''}"\n`);
+      csv += `\nBallots Cast,${lastStatsData.ballots || 0}\nRegistered,${lastStatsData.registered || 0}\n`;
+      triggerDownload(csv, 'text/csv;charset=utf-8', `election_results_${Date.now()}.csv`);
+    };
+
+    $('#downloadJsonBtn').onclick = () => {
+      if (!lastStatsData) return alert('No results data loaded yet. Open this tab to load it.');
+      triggerDownload(JSON.stringify(lastStatsData, null, 2), 'application/json', `election_results_${Date.now()}.json`);
+    };
+
+    $('#printResultsBtn').onclick = () => {
+      if (!lastStatsData) return alert('No results data loaded yet. Open this tab to load it.');
+      const rows = buildResultsRows(lastStatsData);
+      const turn = lastStatsData.registered ? Math.round((lastStatsData.ballots / lastStatsData.registered) * 100) : 0;
+      let html = `<!doctype html><html><head><title>Election Results</title>
+        <style>
+          body{font-family:Segoe UI,Arial,sans-serif;padding:2rem;color:#111;}
+          h1{text-align:center;} .meta{text-align:center;color:#555;margin-bottom:1.5rem;}
+          table{width:100%;border-collapse:collapse;margin-top:1rem;}
+          th,td{border:1px solid #ccc;padding:.6rem;text-align:left;}
+          th{background:#f0f0f0;} .win{font-weight:800;color:#b45309;}
+          @media print{body{padding:0;}}
+        </style></head><body>
+        <h1>${esc((lastStatsData.app_title) || 'Election Results')}</h1>
+        <div class="meta">Ballots: ${lastStatsData.ballots || 0} &nbsp;|&nbsp; Registered: ${lastStatsData.registered || 0} &nbsp;|&nbsp; Turnout: ${turn}%</div>
+        <table><thead><tr><th>Position</th><th>Candidate</th><th>Votes</th><th>%</th><th>Result</th></tr></thead><tbody>`;
+      rows.forEach(r => {
+        html += `<tr><td>${esc(r.position)}</td><td>${esc(r.candidate)}</td><td>${r.votes}</td><td>${r.pct}%</td><td>${r.isWinner ? '👑 WINNER' : ''}</td></tr>`;
+      });
+      html += `</tbody></table><script>window.onload=()=>window.print();<\/script></body></html>`;
+      const w = window.open('', '_blank');
+      w.document.write(html); w.document.close();
     };
 
     updateUIState();
