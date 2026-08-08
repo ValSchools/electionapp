@@ -11,15 +11,14 @@ CREATE TABLE IF NOT EXISTS staff (
   created_at  timestamptz DEFAULT now()
 );
 
--- 1.4 CREATE THE ADMIN AUTH USER (so it shows in Authentication → Users)
--- Change the email/password below. email_confirm=true lets you log in instantly.
-select auth.admin_create_user(
-  jsonb_build_object(
-    'email', 'obiajuluonuchukwu@gmail.com',
-    'password', 'ChangeMe123!',
-    'email_confirm', true
-  )
-);
+-- 1.4 CREATE THE ADMIN AUTH USER
+-- The SQL function auth.admin_create_user is not available in all Supabase
+-- versions, so create the user manually in the dashboard instead:
+--   Authentication → Users → Add user
+--   Email: obiajuluonuchukwu@gmail.com
+--   Password: ChangeMe123!
+--   Check "Auto Confirm User"
+-- Then run section 1.5 below (it links the user to the admin staff role).
 
 -- 1.5 ⚠️ MAKE YOUR ACCOUNT ADMIN (links the auth user to staff role)
 -- Safe to re-run; it only sets the admin role.
