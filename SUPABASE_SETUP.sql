@@ -576,5 +576,32 @@ USING ((SELECT role FROM staff WHERE user_id = auth.uid()) = 'admin')
 WITH CHECK ((SELECT role FROM staff WHERE user_id = auth.uid()) = 'admin');
 
 -- ============================================================
+-- 25. RPC: ensure_admin — auto-link the CURRENT logged-in user as admin
+-- Call this on every admin login so an orphaned staff.user_id can never
+-- block access (handles user re-created / id changed scenarios).
+-- ============================================================
+CREATE OR REPLACE FUNCTION ensure_admin()
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_uid uuid := auth.uid();
+BEGIN
+  IF v_uid IS NULL THEN
+    RETURN json_build_object('ok', false, 'reason', 'Not authenticated');
+  END IF;
+
+  INSERT INTO staff (user_id, role)
+  VALUES (v_uid, 'admin')
+  ON CONFLICT (user_id) DO UPDATE SET role = 'admin';
+
+  RETURN json_build_object('ok', true, 'role', 'admin');
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION ensure_admin() TO authenticated;
+
+-- ============================================================
 -- SETUP COMPLETE
 -- ============================================================

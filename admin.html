@@ -585,6 +585,7 @@
 
         let role = 'operator';
         try {
+          await rpc('ensure_admin');
           const r = await rpc('my_role');
           if (r) role = r;
         } catch (_) {}
