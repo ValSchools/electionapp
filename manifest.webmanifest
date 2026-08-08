@@ -2,7 +2,7 @@
   "name": "Youth Election Terminal",
   "short_name": "YouthVote",
   "description": "Secure, fast digital voting and election management system.",
-  "start_url": "./index.html",
+  "start_url": "/electionapp/index.html",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#090d16",
@@ -24,7 +24,7 @@
   "shortcuts": [
     {
       "name": "Admin Dashboard",
-      "url": "./admin.html"
+      "url": "/electionapp/admin.html"
     }
   ]
 }
