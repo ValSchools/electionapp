@@ -410,6 +410,12 @@
               <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Batch Upload Status</h3>
               <div id="usersOut" style="color: var(--muted); font-size: 0.85rem;">No batch upload performed yet.</div>
             </div>
+
+            <div class="card" style="margin-top: 1.5rem;">
+              <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">Current Polling Officers</h3>
+              <p class="card-subtitle">All admin &amp; officer accounts created in this system.</p>
+              <div id="officersList" style="color: var(--muted); font-size: 0.85rem;">Loading officers…</div>
+            </div>
           </div>
         </div>
       </div>
@@ -636,7 +642,33 @@
       if (tabName === 'voters') loadVoters();
       if (tabName === 'contestants') loadContestants();
       if (tabName === 'settings') loadSettings();
+      if (tabName === 'officers') loadOfficers();
     };
+
+    // ── POLLING OFFICERS LIST ────────────────────────────────
+    async function loadOfficers() {
+      const box = $('#officersList');
+      try {
+        const rows = await rpc('list_officers', {}, false, session.token);
+        if (!rows || rows.length === 0) {
+          box.innerHTML = '<div style="color:var(--muted)">No officers created yet.</div>';
+          return;
+        }
+        let html = '<div style="display:flex;flex-direction:column;gap:0.5rem;">';
+        rows.forEach(r => {
+          const badge = r.role === 'admin'
+            ? '<span style="color:#f5b942;font-weight:600;">ADMIN</span>'
+            : '<span style="color:#5b9dff;font-weight:600;">OFFICER</span>';
+          html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0.75rem;background:rgba(255,255,255,0.03);border-radius:8px;">' +
+                    '<span>' + esc(r.email) + '</span>' + badge + '</div>';
+        });
+        html += '</div>';
+        html += '<div style="margin-top:0.75rem;color:var(--muted);font-size:0.8rem;">Total: ' + rows.length + ' account(s)</div>';
+        box.innerHTML = html;
+      } catch (e) {
+        box.innerHTML = '<div style="color:#ff6b6b;">Failed to load officers: ' + esc(e.message || e) + '</div>';
+      }
+    }
 
     // ── LIVE TALLIES ─────────────────────────────────────────
     async function loadStats() {

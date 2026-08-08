@@ -605,5 +605,28 @@ $$;
 GRANT EXECUTE ON FUNCTION ensure_admin() TO authenticated;
 
 -- ============================================================
+-- 26. RPC: list_officers — return all staff with their auth email
+-- SECURITY DEFINER so it can read auth.users server-side (browser
+-- cannot query auth.users directly due to RLS).
+-- ============================================================
+CREATE OR REPLACE FUNCTION list_officers()
+RETURNS json
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT COALESCE(
+    json_agg(
+      json_build_object('email', u.email, 'role', s.role)
+      ORDER BY s.role, u.email
+    ),
+    '[]'::json
+  )
+  FROM staff s
+  JOIN auth.users u ON u.id = s.user_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION list_officers() TO authenticated;
+
+-- ============================================================
 -- SETUP COMPLETE
 -- ============================================================
