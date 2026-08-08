@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Live Election Results</title>
+  <title>Live Election — Admin</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg:#060912; --card:rgba(20,28,46,0.75); --border:rgba(255,255,255,0.08);
@@ -33,40 +34,103 @@
     .chart-wrap { position:relative; height:260px; margin-top:.75rem; }
     .empty { text-align:center; color:var(--muted); padding:4rem 1rem; }
     .updated { font-size:.75rem; color:var(--muted); }
+    .hidden { display:none !important; }
+
+    /* Login */
+    .login-wrap { max-width:380px; margin:8vh auto; }
+    .input { width:100%; padding:.7rem .9rem; border-radius:10px; border:1px solid var(--border); background:rgba(9,13,22,0.6); color:var(--text); font-family:inherit; font-size:.95rem; outline:none; }
+    .input:focus { border-color:var(--accent); }
+    .btn { cursor:pointer; border:none; border-radius:10px; padding:.7rem 1rem; font-family:inherit; font-weight:600; font-size:.95rem; }
+    .btn-primary { background:var(--accent); color:#fff; }
+    .btn-primary:hover { background:#7c3aed; }
+
+    /* Chat */
+    .chat-card { display:flex; flex-direction:column; height:420px; }
+    .chat-log { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:.5rem; padding:.5rem; }
+    .msg { padding:.5rem .7rem; border-radius:10px; background:rgba(255,255,255,0.05); max-width:85%; }
+    .msg.me { background:rgba(139,92,246,0.2); align-self:flex-end; }
+    .msg .who { font-size:.7rem; color:var(--muted); margin-bottom:.15rem; }
+    .msg .txt { font-size:.9rem; word-break:break-word; }
+    .chat-input { display:flex; gap:.5rem; margin-top:.75rem; }
   </style>
 </head>
 <body>
-  <div class="top">
-    <h1 id="title">🗳 Live Election Results</h1>
-    <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
-      <span class="pill"><span class="dot"></span>LIVE</span>
-      <span class="pill">Ballots: <b id="ballots">0</b></span>
-      <span class="pill">Turnout: <b id="turnout">0%</b></span>
-      <span class="pill updated" id="updated">—</span>
+  <!-- LOGIN GATE -->
+  <div id="loginView">
+    <div class="login-wrap card">
+      <h2 style="margin-bottom:.5rem;">🔐 Live Board Access</h2>
+      <p class="updated" style="margin-bottom:1rem;">Admin sign-in required to view live results & chat.</p>
+      <input class="input" id="email" type="email" placeholder="Admin email" style="margin-bottom:.75rem;">
+      <input class="input" id="password" type="password" placeholder="Password" style="margin-bottom:1rem;">
+      <button class="btn btn-primary" id="loginBtn" style="width:100%;">Sign In</button>
+      <div id="loginErr" style="color:#fca5a5; font-size:.85rem; margin-top:.75rem;"></div>
     </div>
   </div>
-  <div id="board" class="grid"><div class="empty">Loading results…</div></div>
+
+  <!-- APP -->
+  <div id="appView" class="hidden">
+    <div class="top">
+      <h1 id="title">🗳 Live Election Results</h1>
+      <div style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+        <span class="pill"><span class="dot"></span>LIVE</span>
+        <span class="pill">Ballots: <b id="ballots">0</b></span>
+        <span class="pill">Turnout: <b id="turnout">0%</b></span>
+        <span class="pill updated" id="updated">—</span>
+        <button class="btn btn-primary" id="logoutBtn" style="padding:.4rem .8rem; font-size:.8rem;">Logout</button>
+      </div>
+    </div>
+    <div id="board" class="grid"><div class="empty">Loading results…</div></div>
+
+    <div class="card chat-card" style="margin-top:1.5rem; max-width:680px;">
+      <h2>💬 Live Chat</h2>
+      <div class="chat-log" id="chatLog"><div class="empty" style="padding:1rem;">Loading messages…</div></div>
+      <div class="chat-input">
+        <input class="input" id="chatText" placeholder="Type a message…" maxlength="500">
+        <button class="btn btn-primary" id="sendBtn">Send</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const CFG = {
       url: 'https://qxnnvrutncabawodyznl.supabase.co',
       key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF4bm52cnV0bmNhYmF3b2R5em5sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxNTg0MjEsImV4cCI6MjEwMTczNDQyMX0.oLIy2heucbVnqaYrWBAKR7bjZSlZfm4Vgmr1CXY_NBg'
     };
+    const supabase = window.supabase.createClient(CFG.url, CFG.key);
     const charts = {};
     const esc = s => String(s).replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
+    let currentUser = null;
 
-    async function load() {
-      try {
-        const r = await fetch(CFG.url + '/rest/v1/rpc/election_results', {
-          method:'POST', headers:{ apikey:CFG.key, Authorization:'Bearer '+CFG.key, 'Content-Type':'application/json' }, body:'{}'
-        });
-        const data = await r.json();
-        render(data);
-      } catch (e) {
-        document.getElementById('board').innerHTML = '<div class="empty">Could not load results. Retrying…</div>';
-      }
+    // ── AUTH ──
+    async function doLogin() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      document.getElementById('loginErr').textContent = '';
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) { document.getElementById('loginErr').textContent = error.message; return; }
+      // require admin role
+      const { data: role } = await supabase.rpc('my_role');
+      if (role !== 'admin') { await supabase.auth.signOut(); document.getElementById('loginErr').textContent = 'Admin access only.'; return; }
+      currentUser = data.user;
+      enterApp();
+    }
+    document.getElementById('loginBtn').onclick = doLogin;
+    document.getElementById('logoutBtn').onclick = async () => { await supabase.auth.signOut(); location.reload(); };
+
+    function enterApp() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('appView').classList.remove('hidden');
+      load();
+      setInterval(load, 5000);
+      initChat();
     }
 
+    // ── BOARD ──
+    async function load() {
+      const { data, error } = await supabase.rpc('election_results');
+      if (error) { document.getElementById('board').innerHTML = '<div class="empty">Could not load results.</div>'; return; }
+      render(data);
+    }
     function render(data) {
       document.getElementById('title').textContent = '🗳 ' + (data.app_title || 'Live Election Results');
       const ballots = data.ballots || 0, registered = data.registered || 0;
@@ -77,18 +141,15 @@
       const positions = data.positions || [];
       const board = document.getElementById('board');
       if (!positions.length) { board.innerHTML = '<div class="empty">No positions configured yet.</div>'; return; }
-
       board.innerHTML = '';
       positions.forEach((p, i) => {
         const cands = (p.candidates || []).slice().sort((a,b)=>(b.votes||0)-(a.votes||0));
         const max = cands.length ? (cands[0].votes||0) : 0;
         const winner = (max > 0 && cands[0]) ? cands[0].name : null;
-        const card = document.createElement('div');
-        card.className = 'card';
+        const card = document.createElement('div'); card.className = 'card';
         card.innerHTML = `<h2><span>${esc(p.name)}</span>${winner ? '<span class="winner">👑 '+esc(winner)+'</span>' : ''}</h2>
           <div class="chart-wrap"><canvas id="c${i}"></canvas></div>`;
         board.appendChild(card);
-
         const labels = cands.map(c=>c.name);
         const vals = cands.map(c=>c.votes||0);
         const colors = cands.map((c,idx)=> idx===0 && max>0 ? 'rgba(251,191,36,0.85)' : 'rgba(139,92,246,0.7)');
@@ -97,17 +158,59 @@
         charts[i] = new Chart(ctx, {
           type:'bar',
           data:{ labels, datasets:[{ label:'Votes', data:vals, backgroundColor:colors, borderRadius:8 }] },
-          options:{
-            responsive:true, maintainAspectRatio:false,
-            plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ' '+c.parsed.y+' votes' } } },
+          options:{ responsive:true, maintainAspectRatio:false,
+            plugins:{ legend:{display:false} },
             scales:{ x:{ ticks:{ color:'#cbd5e1' }, grid:{ display:false } }, y:{ beginAtZero:true, ticks:{ color:'#cbd5e1', precision:0 }, grid:{ color:'rgba(255,255,255,0.06)' } } }
           }
         });
       });
     }
 
-    load();
-    setInterval(load, 5000);
+    // ── CHAT (Realtime) ──
+    let chatReady = false;
+    async function initChat() {
+      if (chatReady) return; chatReady = true;
+      const log = document.getElementById('chatLog');
+      const { data: existing } = await supabase.from('chat_messages').select('*').order('created_at', { ascending:true }).limit(100);
+      log.innerHTML = '';
+      (existing || []).forEach(addMsg);
+      scrollChat();
+
+      supabase.channel('public:chat_messages')
+        .on('postgres_changes', { event:'INSERT', schema:'public', table:'chat_messages' }, payload => { addMsg(payload.new); scrollChat(); })
+        .subscribe();
+
+      document.getElementById('sendBtn').onclick = sendMsg;
+      document.getElementById('chatText').addEventListener('keydown', e => { if (e.key === 'Enter') sendMsg(); });
+    }
+    function addMsg(m) {
+      const log = document.getElementById('chatLog');
+      const me = currentUser && m.user_id === currentUser.id;
+      const div = document.createElement('div');
+      div.className = 'msg' + (me ? ' me' : '');
+      div.innerHTML = `<div class="who">${esc(m.user_email || 'Observer')}${m.role === 'admin' ? ' 👑' : ''}</div><div class="txt">${esc(m.body)}</div>`;
+      log.appendChild(div);
+    }
+    function scrollChat() { const l = document.getElementById('chatLog'); l.scrollTop = l.scrollHeight; }
+    async function sendMsg() {
+      const inp = document.getElementById('chatText');
+      const body = inp.value.trim();
+      if (!body) return;
+      const { data: role } = await supabase.rpc('my_role');
+      await supabase.from('chat_messages').insert({
+        user_id: currentUser.id, user_email: currentUser.email, role: role || 'observer', body
+      });
+      inp.value = '';
+    }
+
+    // restore session
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        const { data: role } = await supabase.rpc('my_role');
+        if (role === 'admin') { currentUser = data.session.user; enterApp(); }
+      }
+    })();
   </script>
 </body>
 </html>
