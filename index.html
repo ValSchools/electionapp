@@ -471,11 +471,27 @@ $('#cast').onclick = async () => {
     $('#logout').onclick    = () => { localStorage.removeItem('yeSession'); S.session=null; S.ballot=null; draw(); };
 
     /* ── PWA ─────────────────────────────────────────────── */
+    const installBtn = $('#install');
     let deferred = null;
-    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred=e; $('#install').classList.add('show'); });
-    $('#install').onclick = async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice; deferred=null; $('#install').classList.remove('show'); };
-    window.addEventListener('appinstalled', () => $('#install').classList.remove('show'));
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    function markInstalled() {
+      installBtn.classList.remove('show');
+      installBtn.textContent = '✓ Installed';
+      installBtn.disabled = true;
+      installBtn.style.opacity = '.7';
+    }
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; installBtn.classList.add('show'); });
+    installBtn.onclick = async () => {
+      if (!deferred) return;
+      deferred.prompt();
+      await deferred.userChoice;
+      deferred = null;
+      installBtn.classList.remove('show');
+    };
+    window.addEventListener('appinstalled', markInstalled);
+    if (window.navigator.standalone) markInstalled(); // already installed (iOS)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').then(() => navigator.serviceWorker.ready).catch(() => {});
+    }
 
     // iOS (Safari) has no beforeinstallprompt — guide the user to the Share sheet.
     const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) ||
