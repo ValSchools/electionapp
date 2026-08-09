@@ -165,6 +165,15 @@
       functionUrl: 'https://qxnnvrutncabawodyznl.supabase.co/functions/v1/log-vote'
     };
 
+    // ── Redirect admin password-reset links to admin.html ──
+    (function () {
+      const h = window.location.hash;
+      if (h.includes('access_token') && h.includes('type=recovery')) {
+        const base = window.location.href.split('#')[0].replace(/index\.html$/, 'admin.html');
+        window.location.replace(base + h);
+      }
+    })();
+
     // ── Clear any stale session on load ─────────────────────
     function isJwtExpired(token) {
       try {

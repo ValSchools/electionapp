@@ -320,6 +320,29 @@
             <input class="input" id="password" type="password" placeholder="••••••••" required autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-primary btn-block" id="signInSubmitBtn">Sign in to Dashboard</button>
+          <div style="text-align:right;margin-top:.9rem">
+            <a href="#" id="forgotLink" style="font-size:.9rem;color:var(--cyan);text-decoration:none">Forgot password?</a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- RESET PASSWORD SCREEN -->
+    <div id="resetView" class="auth-container hidden">
+      <div class="card">
+        <h2 class="card-title">Set a New Password</h2>
+        <p class="card-subtitle">Choose a new password for your admin account.</p>
+        <div id="resetAlert"></div>
+        <form id="resetForm">
+          <div class="form-group">
+            <label>New Password</label>
+            <input class="input" id="newPassword" type="password" placeholder="Min 8 characters" required autocomplete="new-password" minlength="8">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input class="input" id="confirmPassword" type="password" placeholder="Re-enter password" required autocomplete="new-password" minlength="8">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="resetSubmitBtn">Update Password</button>
         </form>
       </div>
     </div>
@@ -773,6 +796,47 @@
       }
     }
 
+    // PASSWORD RESET (from recovery email link)
+    function handleRecoveryLink() {
+      const hash = window.location.hash;
+      if (!hash.includes('access_token') || !hash.includes('type=recovery')) return;
+      const params = new URLSearchParams(hash.slice(1));
+      const accessToken = params.get('access_token');
+      if (!accessToken) return;
+      $('#loginView').classList.add('hidden');
+      $('#resetView').classList.remove('hidden');
+      $('#resetForm').onsubmit = async e => {
+        e.preventDefault();
+        const np = $('#newPassword').value;
+        const cp = $('#confirmPassword').value;
+        if (np.length < 8) { showBanner('#resetAlert', 'Password must be at least 8 characters.', true); return; }
+        if (np !== cp) { showBanner('#resetAlert', 'Passwords do not match.', true); return; }
+        const btn = $('#resetSubmitBtn');
+        btn.disabled = true; btn.textContent = 'Updating…';
+        try {
+          const r = await fetch(`${CFG.url}/auth/v1/user`, {
+            method: 'PUT',
+            headers: {
+              apikey: CFG.key,
+              Authorization: 'Bearer ' + accessToken,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ password: np })
+          });
+          if (!r.ok) {
+            const d = await r.json().catch(() => null);
+            throw Error(d?.message || ('HTTP ' + r.status));
+          }
+          showBanner('#resetAlert', 'Password updated. You can now sign in.', false);
+          setTimeout(() => { window.location.hash = ''; window.location.reload(); }, 1500);
+        } catch (err) {
+          showBanner('#resetAlert', 'Could not update password: ' + (err.message || err), true);
+          btn.disabled = false; btn.textContent = 'Update Password';
+        }
+      };
+    }
+    handleRecoveryLink();
+
     // SIGN IN
     $('#loginForm').onsubmit = async e => {
       e.preventDefault();
@@ -819,6 +883,30 @@
       } finally {
         btn.disabled = false;
         btn.textContent = 'Sign in to Dashboard';
+      }
+    };
+
+    // FORGOT PASSWORD
+    $('#forgotLink').onclick = async e => {
+      e.preventDefault();
+      const userEmail = ($('#email').value || '').trim().toLowerCase();
+      if (!userEmail) {
+        showBanner('#loginAlert', 'Enter your admin email above first, then click "Forgot password?".', true);
+        return;
+      }
+      $('#forgotLink').textContent = 'Sending reset link…';
+      try {
+        const r = await fetch(`${CFG.url}/auth/v1/recover`, {
+          method: 'POST',
+          headers: { apikey: CFG.key, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: userEmail })
+        });
+        if (!r.ok) throw Error('Request failed (HTTP ' + r.status + ').');
+        showBanner('#loginAlert', 'Password reset email sent. Check your inbox (and spam) for the reset link.', false);
+      } catch (err) {
+        showBanner('#loginAlert', 'Could not send reset email: ' + (err.message || err), true);
+      } finally {
+        $('#forgotLink').textContent = 'Forgot password?';
       }
     };
 
