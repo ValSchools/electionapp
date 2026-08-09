@@ -477,6 +477,17 @@ $('#cast').onclick = async () => {
     window.addEventListener('appinstalled', () => $('#install').classList.remove('show'));
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
+    // iOS (Safari) has no beforeinstallprompt — guide the user to the Share sheet.
+    const isIOS = /iP(ad|hone|od)/.test(navigator.userAgent) ||
+      (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+    if (isIOS && !window.navigator.standalone) {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:200;background:rgba(139,92,246,.95);color:#fff;padding:.7rem 1rem;font-size:.85rem;text-align:center;';
+      hint.innerHTML = '📲 To install: tap the <b>Share</b> icon, then <b>“Add to Home Screen”</b>.';
+      document.body.appendChild(hint);
+      setTimeout(() => hint.remove(), 8000);
+    }
+
     // Load application settings (title) on startup
     async function loadSettings() {
       try {
